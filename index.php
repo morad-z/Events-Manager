@@ -1,9 +1,9 @@
-<!-- ////////////////////////////// Morad Zubidat : 208156828 & Amin Masharqa : 207358326 -->
+<!-- ////////////////////////////// -->
 <?php
-$dbhost = "148.66.138.145";
-$dbuser = "dbCourseSt23a";
-$dbpass = "dbcourseShUsr23!";
-$dbname = "dbCourseSt23";
+$dbhost = "***********";
+$dbuser = "***********";
+$dbpass = "***********";
+$dbname = "***********";
 
 $conn = mysqli_connect($dbhost, $dbuser, $dbpass, $dbname);
 if (!$conn) {
