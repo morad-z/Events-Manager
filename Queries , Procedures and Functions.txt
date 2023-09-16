@@ -1,0 +1,61 @@
+///////////////////////////////////////////////Queries///////////////////////////////////////////////////////
+1. Display all events in the last X weeks:
+   $query = "SELECT event_id, event_date, event_description, guests_number, event_price FROM dbCourseSt23.team31_Event_tbl1 WHERE event_date >= ? ORDER BY event_date DESC";
+
+2. Display active events (events that have not yet taken place):
+   $query = "SELECT event_id, event_date, event_description, guests_number, event_price FROM dbCourseSt23.team31_Event_tbl1 WHERE event_date >= CURDATE() ORDER BY event_date DESC";
+
+3. Display events that lack waiters and cooks:
+   $query = "SELECT * FROM dbCourseSt23.team31_Event_tbl1 WHERE event_id NOT IN (SELECT DISTINCT event_id FROM dbCourseSt23.team31_CREW_TBL1 WHERE role_ = 'waiter' AND role_ = 'chef')";
+
+4. Display repeat customers (customers with more than one event):
+   $query = "SELECT c.first_name, c.last_name, COUNT(e.client_id) AS event_count 
+             FROM dbCourseSt23.team31_Client_tbl1 c
+             JOIN dbCourseSt23.team31_Event_tbl1 e ON c.client_id = e.client_id
+             GROUP BY c.first_name, c.last_name
+             HAVING COUNT(e.client_id) > 1";
+
+5. Display income for a specific salesperson in a certain month and year:
+   $query = "SELECT calculateIncomeForSalespersonFunction_team31(?, ?, ?, ?) AS totalIncome";
+
+6. Display income X months back:
+   $query = "SELECT SUM(event_price) AS total_income FROM dbCourseSt23.team31_Event_tbl1 WHERE event_date >= ?";
+
+7. Send invitation:
+   $availabilityQuery = "SELECT COUNT(*) AS count FROM dbCourseSt23.team31_Event_tbl1 WHERE event_date = ?";
+   $salespersonQuery = "SELECT * FROM dbCourseSt23.team31_CREW_TBL WHERE member_id = ?";
+   $customerQuery = "SELECT * FROM dbCourseSt23.team31_Client_tbl1 WHERE client_id = ?";
+   $invitationQuery = "INSERT INTO dbCourseSt23.team31_Event_tbl1 (salesMan_id, event_date, event_description, guests_number, meal_price, minimum_price, event_price, req_waiters, req_chefs, client_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+8. DisplayEventsLastXWeeks:
+   $query = "SELECT event_id, event_date, event_description, guests_number, event_price FROM dbCourseSt23.team31_Event_tbl1 WHERE event_date >= ? ORDER BY event_date DESC";
+
+9. DisplayActiveEvents:
+   $query = "SELECT event_id, event_date, event_description, guests_number, event_price FROM dbCourseSt23.team31_Event_tbl1 WHERE event_date >= CURDATE() ORDER BY event_date DESC";
+
+10. DisplayEventsLackingStaff:
+   $query = "SELECT * FROM dbCourseSt23.team31_Event_tbl1 WHERE event_id NOT IN (SELECT DISTINCT event_id FROM dbCourseSt23.team31_CREW_TBL1 WHERE role_ = 'waiter' AND role_ = 'chef')";
+
+11. DisplayRepeatCustomers:
+   $query = "SELECT c.first_name, c.last_name, COUNT(e.client_id) AS event_count 
+             FROM dbCourseSt23.team31_Client_tbl1 c
+             JOIN dbCourseSt23.team31_Event_tbl1 e ON c.client_id = e.client_id
+             GROUP BY c.first_name, c.last_name
+             HAVING COUNT(e.client_id) > 1";
+
+12. DisplayIncomeXMonthsBack:
+   $query = "SELECT SUM(event_price) AS total_income FROM dbCourseSt23.team31_Event_tbl1 WHERE event_date >= ?";
+
+///////////////////////////////////////////////Procedures////////////////////////////////////////////////////
+1. Assign crew member to an event:
+   $sql = "CALL assignCrewToEventProcedure($crewId, $eventId)";
+
+2. Apply discount to an event:
+   $sql = "CALL applyDiscountToEventProcedure($eventId, $discountPercent)";
+
+///////////////////////////////////////////////Functions/////////////////////////////////////////////////////
+
+1. DisplayIncomeForSalesperson_team31:
+   $query = "SELECT calculateIncomeForSalespersonFunction_team31(?, ?, ?, ?) AS totalIncome";
+
+

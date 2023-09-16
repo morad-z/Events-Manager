@@ -1,0 +1,33 @@
+EVENT TABLE  
+•	Event_id
+•	salesman_id
+•	event_date 
+•	event_description 
+•	guests_number 
+•	meal_price
+•	event_price
+•	req_wqiters
+
+Client Table :
+•	client_id
+•	phone_number
+•	address_country
+•	address_city
+•	address_street
+•	address_blduing 
+•	first_name
+•	last_name
+•	event_id
+
+
+CREW TABLE:
+•	member_id
+•	role_
+•	address_city
+•	address_country
+•	address_bulding 
+•	address_street
+•	phone_number
+•	first_name
+•	last_name
+•	event_id

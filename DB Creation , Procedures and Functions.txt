@@ -1,0 +1,143 @@
+CREATE TABLE `team31_Event_tbl1` (
+  `event_id` int(11) NOT NULL AUTO_INCREMENT,
+  `salesMan_id` int(11) DEFAULT NULL,
+  `event_date` date DEFAULT NULL,
+  `event_description` varchar(255) DEFAULT NULL,
+  `guests_number` int(11) DEFAULT NULL,
+  `meal_price` decimal(10,2) DEFAULT NULL,
+  `minimum_price` decimal(10,2) DEFAULT NULL,
+  `event_price` decimal(10,2) DEFAULT NULL,
+  `req_waiters` int(11) DEFAULT NULL,
+  `req_chefs` int(11) DEFAULT NULL,
+  `client_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`event_id`),
+  KEY `salesMan_id` (`salesMan_id`),
+  CONSTRAINT `team31_Event_tbl1_ibfk_1` FOREIGN KEY (`salesMan_id`) REFERENCES `team31_CREW_TBL` (`member_id`) ON DELETE SET NULL
+)
+
+CREATE TABLE `team31_CREW_TBL1` (
+  `member_id` int(11) NOT NULL AUTO_INCREMENT,
+  `role_` varchar(50) DEFAULT NULL,
+  `address_city` varchar(100) DEFAULT NULL,
+  `address_street` varchar(100) DEFAULT NULL,
+  `address_bldg_NO` varchar(10) DEFAULT NULL,
+  `phone_number` varchar(20) DEFAULT NULL,
+  `first_name` varchar(100) DEFAULT NULL,
+  `last_name` varchar(100) DEFAULT NULL,
+  `event_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`member_id`),
+  KEY `event_id` (`event_id`),
+  CONSTRAINT `team31_CREW_TBL1_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `team31_Event_tbl1` (`event_id`) ON DELETE CASCADE
+)
+
+
+
+CREATE TABLE `team31_Client_tbl1` (
+  `client_id` int(11) NOT NULL AUTO_INCREMENT,
+  `phone_number` varchar(20) DEFAULT NULL,
+  `address_country` varchar(100) DEFAULT NULL,
+  `address_city` varchar(100) DEFAULT NULL,
+  `address_street` varchar(100) DEFAULT NULL,
+  `address_bldg_NO` varchar(10) DEFAULT NULL,
+  `first_name` varchar(100) DEFAULT NULL,
+  `last_name` varchar(100) DEFAULT NULL,
+  `event_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`client_id`),
+  KEY `event_id` (`event_id`),
+  CONSTRAINT `team31_Client_tbl1_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `team31_Event_tbl1` (`event_id`) ON DELETE CASCADE
+)
+
+assign crew member to event procedure : 
+
+DELIMITER //
+CREATE PROCEDURE assignCrewToEventProcedure(IN crewId INT, IN eventId INT)
+BEGIN
+    DECLARE crewExists INT;
+    DECLARE eventExists INT;
+    DECLARE eventDate DATE;
+    DECLARE currentDate DATE;
+    DECLARE assignedCrewCount INT;
+    DECLARE requiredWaiters INT;
+    DECLARE requiredChefs INT;
+    DECLARE remainingCrewCount INT; -- Declare the variable here
+
+    -- Check if the crew exists
+    SELECT COUNT(*) INTO crewExists FROM team31_CREW_TBL1 WHERE member_id = crewId;
+    
+    -- Check if the event exists
+    SELECT COUNT(*) INTO eventExists FROM team31_Event_tbl1 WHERE event_id = eventId;
+    
+    IF crewExists > 0 AND eventExists > 0 THEN
+        -- Check if the event is in the future
+        SELECT event_date INTO eventDate FROM team31_Event_tbl1 WHERE event_id = eventId;
+        SET currentDate = CURDATE();
+        
+        IF eventDate >= currentDate THEN
+            -- Check if the event already has the maximum number of crew members assigned
+            SELECT COUNT(*) INTO assignedCrewCount FROM team31_CREW_TBL1 WHERE event_id = eventId;
+            SELECT req_waiters, req_chefs INTO requiredWaiters, requiredChefs FROM team31_Event_tbl1 WHERE event_id = eventId;
+            
+            IF assignedCrewCount < requiredWaiters + requiredChefs THEN
+                -- Insert the assignment into the database
+                UPDATE team31_CREW_TBL1 SET event_id = eventId WHERE member_id = crewId;
+                SET assignedCrewCount = assignedCrewCount + 1;
+                SET remainingCrewCount = requiredWaiters + requiredChefs - assignedCrewCount;
+                SELECT CONCAT('Crew member successfully assigned to the event! ', remainingCrewCount, ' crew members are still needed.') AS message;
+            ELSE
+                SELECT 'Error: The event already has the maximum number of crew members assigned.' AS message;
+            END IF;
+        ELSE
+            SELECT 'Error: The event is not in the future. You cannot add crew members to past events.' AS message;
+        END IF;
+    ELSE
+        SELECT 'Error: Invalid Crew ID or Event ID. Please check and try again.' AS message;
+    END IF;
+END //
+DELIMITER ;
+
+
+make discount procedure : 
+
+DELIMITER //
+CREATE PROCEDURE applyDiscountToEventProcedure(IN eventId INT, IN discountPercent DECIMAL(5,2))
+BEGIN
+    DECLARE eventExists INT;
+    DECLARE eventPrice DECIMAL(10,2);
+    DECLARE discountedPrice DECIMAL(10,2);
+
+    -- Check if the event exists
+    SELECT COUNT(*) INTO eventExists FROM dbCourseSt23.team31_Event_tbl1 WHERE event_id = eventId;
+
+    IF eventExists > 0 THEN
+        -- Get the existing event price
+        SELECT event_price INTO eventPrice FROM dbCourseSt23.team31_Event_tbl1 WHERE event_id = eventId;
+
+        -- Calculate the discounted price
+        SET discountedPrice = eventPrice - (eventPrice * (discountPercent / 100));
+
+        -- Update the event with the discount
+        UPDATE dbCourseSt23.team31_Event_tbl1 SET event_price = discountedPrice WHERE event_id = eventId;
+        SELECT 'Discount applied successfully!' AS message;
+    ELSE
+        SELECT 'Error: Invalid Event ID. Please check and try again.' AS message;
+    END IF;
+END //
+DELIMITER ;
+
+display salesperson income function : 
+
+DELIMITER //
+CREATE FUNCTION calculateIncomeForSalespersonFunction_team31(salespersonFirstName VARCHAR(50), salespersonLastName VARCHAR(50), month INT, year INT)
+RETURNS DECIMAL(10, 2)
+BEGIN
+    DECLARE totalIncome DECIMAL(10, 2);
+    
+    SELECT SUM(event_price) INTO totalIncome
+    FROM dbCourseSt23.team31_Event_tbl1
+    JOIN dbCourseSt23.team31_CREW_TBL1 ON dbCourseSt23.team31_Event_tbl1.salesMan_id = dbCourseSt23.team31_CREW_TBL1.member_id
+    WHERE dbCourseSt23.team31_CREW_TBL1.first_name = salespersonFirstName AND dbCourseSt23.team31_CREW_TBL1.last_name = salespersonLastName
+    AND MONTH(event_date) = month AND YEAR(event_date) = year;
+    
+    RETURN totalIncome;
+END //
+DELIMITER ;
